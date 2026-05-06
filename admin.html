@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClinTrack Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="admin-styles.css">
+    <link rel="stylesheet" href="portal-menu.css">
+</head>
+<body>
+
+<script>
+// Check authentication
+(function() {
+  const currentUser = localStorage.getItem('currentUser');
+  if (!currentUser) {
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  const user = JSON.parse(currentUser);
+  if (user.role !== 'admin') {
+    localStorage.removeItem('currentUser');
+    window.location.href = 'login.html';
+  }
+})();
+</script>
+
+<header class="admin-header portal-header">
+    <div class="header-left portal-header-left">
+        <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Open navigation menu">
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+        </button>
+        <img src="clintrack_logo.png" alt="ClinTrack Logo" class="portal-logo">
+        <div class="portal-title-group">
+            <h1 class="portal-title">ClinTrack Portal</h1>
+            <span class="admin-badge portal-badge">Admin</span>
+        </div>
+    </div>
+    <div class="header-right portal-header-right">
+        <nav class="header-nav">
+        <a href="AboutUs.html" target="_blank" rel="noopener noreferrer" class="about-link">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>About Us</span>
+        </a>
+        </nav>
+        <div class="profile-menu">
+            <button class="profile-trigger" type="button" aria-haspopup="true" aria-expanded="false" onclick="toggleProfileMenu(event)" aria-label="Open profile menu">
+                <i class="fa-solid fa-user"></i>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="profile-name" id="profileName">Loading...</div>
+                <button class="logout-btn portal-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="admin-container portal-layout">
+    <nav class="admin-sidebar portal-nav" id="sidebar" aria-label="Primary navigation">
+        <div class="sidebar-header portal-nav-header">
+            <h2 class="sidebar-title">Menu</h2>
+        </div>
+        <ul class="nav-menu portal-nav-menu">
+            <li><a href="#dashboard" data-section="dashboard" onclick="showAdminSection('dashboard', event)" class="nav-link active"><i class="fa-solid fa-chart-bar"></i> Dashboard</a></li>
+            <li><a href="#googleform" data-section="googleform" onclick="showAdminSection('googleform', event)" class="nav-link"><i class="fa-solid fa-plus"></i> Add Student</a></li>
+            <li><a href="#students" data-section="students" onclick="showAdminSection('students', event)" class="nav-link"><i class="fa-solid fa-users"></i> Manage Students</a></li>
+            <li><a href="#addinstructor" data-section="addinstructor" onclick="showAdminSection('addinstructor', event)" class="nav-link"><i class="fa-solid fa-plus"></i> Add Instructor</a></li>
+            <li><a href="#instructors" data-section="instructors" onclick="showAdminSection('instructors', event)" class="nav-link"><i class="fa-solid fa-users"></i> Manage Instructors</a></li>
+            <li><a href="#announcements" data-section="announcements" onclick="showAdminSection('announcements', event)" class="nav-link"><i class="fa-solid fa-bullhorn"></i> Announcements</a></li>
+        </ul>   
+    </nav>
+
+    <div class="admin-main">
+        
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="admin-section active">
+            <h2>Dashboard</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-user-graduate"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalStudents">0</div>
+                        <div class="stat-label">Total Students</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalInstructors">0</div>
+                        <div class="stat-label">Total Instructors</div>
+                    </div>
+                </div>
+    
+            </div>
+
+            <div class="dashboard-content">
+                <div class="recent-activity">
+                    <h3>Recent Activities</h3>
+                    <div id="recentList" class="activity-list">
+                        <p class="empty-state">No recent activities</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Instructor Section -->
+        <section id="addinstructor" class="admin-section">
+            <h2>Add Instructor</h2>
+            <div class="google-form-content form-single-layout">
+                <div class="submission-card submission-card-large">
+                    <form onsubmit="createInstructorFromForm(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="formInstructorName">Full Name *</label>
+                                <input type="text" id="formInstructorName" placeholder="Enter instructor full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="formInstructorEmail">Email Address *</label>
+                                <input type="email" id="formInstructorEmail" placeholder="Enter instructor email" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="formInstructorId">Instructor ID *</label>
+                                <input type="text" id="formInstructorId" placeholder="Enter instructor ID" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="formInstructorPassword">Password *</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="formInstructorPassword" placeholder="Enter password" required>
+                                    <button
+                                        type="button"
+                                        class="password-toggle"
+                                        onclick="togglePasswordVisibility('formInstructorPassword', this)"
+                                        aria-label="Show password"
+                                        aria-pressed="false">
+                                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row full-span">
+                            <div class="form-group">
+                                <label for="formInstructorStatus">Status</label>
+                                <select id="formInstructorStatus" class="status-select">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Create Instructor Account</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Manage Instructors Section -->
+        <section id="instructors" class="admin-section">
+            <h2>Manage Instructors</h2>
+            <div class="action-bar">
+                <input type="text" id="instructorSearch" placeholder="🔍 Search instructors..." class="search-box" onkeyup="filterInstructors()">
+            </div>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="instructorTableBody">
+                        <tr class="empty-row">
+                            <td colspan="5">No instructors found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Add Student Section -->
+        <section id="googleform" class="admin-section">
+            <h2>Add Student</h2>
+            
+            <div class="google-form-content form-single-layout">
+                <div class="submission-card submission-card-large">
+                    <form onsubmit="createStudentFromForm(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="formStudentName">Full Name *</label>
+                                <input type="text" id="formStudentName" placeholder="Enter student full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="formStudentEmail">Email Address *</label>
+                                <input type="email" id="formStudentEmail" placeholder="Enter student email" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="formStudentId">Student ID *</label>
+                                <input type="text" id="formStudentId" placeholder="Enter student ID" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="formStudentPassword">Password *</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="formStudentPassword" placeholder="Enter password" required>
+                                    <button
+                                        type="button"
+                                        class="password-toggle"
+                                        onclick="togglePasswordVisibility('formStudentPassword', this)"
+                                        aria-label="Show password"
+                                        aria-pressed="false">
+                                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row full-span">
+                            <div class="form-group">
+                                <label for="formStudentStatus">Status</label>
+                                <select id="formStudentStatus" class="status-select">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Create Student Account</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Manage Students Section -->
+        <section id="students" class="admin-section">
+            <h2>Manage Students</h2>
+            
+            <div class="action-bar">
+                <input type="text" id="studentSearch" placeholder="🔍 Search students..." class="search-box" onkeyup="filterStudents()">
+            </div>
+
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Enrollment Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                        <tr class="empty-row">
+                            <td colspan="6">No students found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Announcements Section -->
+        <section id="announcements" class="admin-section">
+            <h2>Announcements</h2>
+            
+            <div class="action-bar">
+                <button class="btn btn-primary" onclick="openAddAnnouncementModal()">📢 Post Announcement</button>
+            </div>
+
+            <div id="announcementsList" class="announcements-container">
+                <p class="empty-state">No announcements posted</p>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<!-- Modals -->
+
+<!-- Add Announcement Modal -->
+<div id="addAnnouncementModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('addAnnouncementModal')">&times;</span>
+        <h2>Post Announcement</h2>
+        <form onsubmit="addAnnouncement(event)">
+            <div class="form-group">
+                <label>Title:</label>
+                <input type="text" id="announcementTitle" required>
+            </div>
+            <div class="form-group">
+                <label>Message:</label>
+                <textarea id="announcementMessage" rows="6" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Priority:</label>
+                <select id="announcementPriority" required>
+                    <option value="Normal">Normal</option>
+                    <option value="Important">Important</option>
+                    <option value="Urgent">Urgent</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Post Announcement</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addAnnouncementModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div id="editStudentModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('editStudentModal')">&times;</span>
+        <h2>Edit Student</h2>
+        <form onsubmit="updateStudent(event)">
+            <input type="hidden" id="editStudentId">
+            <div class="form-group">
+                <label>Full Name:</label>
+                <input type="text" id="editStudentName" required>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="editStudentEmail" required>
+            </div>
+            <div class="form-group">
+                <label>Enrollment Date:</label>
+                <input type="date" id="editStudentEnrollment" required>
+            </div>
+            <div class="form-group">
+                <label>Status:</label>
+                <select id="editStudentStatus" required>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Update Student</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editStudentModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Instructor Modal -->
+<div id="editInstructorModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('editInstructorModal')">&times;</span>
+        <h2>Edit Instructor</h2>
+        <form onsubmit="updateInstructor(event)">
+            <input type="hidden" id="editInstructorId">
+            <div class="form-group">
+                <label>Full Name:</label>
+                <input type="text" id="editInstructorName" required>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="editInstructorEmail" required>
+            </div>
+            <div class="form-group">
+                <label>Status:</label>
+                <select id="editInstructorStatus" required>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Update Instructor</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editInstructorModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="module" src="admin-script.js" defer></script>
+
+</body>
+</html>

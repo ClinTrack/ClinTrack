@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClinTrack - Login</title>
+    <link rel="stylesheet" href="login-styles.css">
+</head>
+<body>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="logo-wrap">
+                <img src="clintrack_logo.png" alt="ClinTrack Logo" class="logo-img">
+                <div>
+                    <h1>ClinTrack</h1>
+                    <p>Sacred Heart's College Nursing Portal</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <!-- Tab Buttons -->
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+                <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="form-tab active">
+                <h2>Welcome Back</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                            <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle password visibility">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group role-select">
+                        <label>Login As</label>
+                        <select id="loginRole" required>
+                            <option value="">-- Select Role --</option>
+                            <option value="student">Student</option>
+                            <option value="instructor">Clinical Instructor</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                    </div>
+
+                    <div class="remember-forgot">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="rememberMe">
+                            Remember me
+                        </label>
+                        <a href="#" onclick="showForgotPassword(event)" class="forgot-link">Forgot Password?</a>
+            </div>
+                <button type="submit" class="btn btn-login">Login</button>
+                </form>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" class="form-tab">
+                <h2>Create Account</h2>
+                <div class="signup-instructions">
+                    <div class="signup-info-card">
+                        <h3>📋 How to Sign Up</h3>
+                        <p>We use a Google Form to collect your registration information. The admin will then verify your details and create your account in the system.</p>
+                        
+                        <div class="steps">
+                            <div class="step">
+                                <div class="step-number">1</div>
+                                <div class="step-text">
+                                    <strong>Fill Out the Form</strong>
+                                    <p>Click the button below to fill out the registration form with your information.</p>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">2</div>
+                                <div class="step-text">
+                                    <strong>Wait for Approval</strong>
+                                    <p>The admin will review your submission and create your account.</p>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">3</div>
+                                <div class="step-text">
+                                    <strong>Receive Credentials</strong>
+                                    <p>Admin will provide you with your login credentials via email.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="google-form-button-container">
+                        <a href="https://forms.gle/qt9nySjwhFpP5S5T6" target="_blank" class="btn btn-google-form">
+                            📝 Fill Out Registration Form
+                        </a>
+                        <p class="form-note">You will be directed to a Google Form. A new window will open.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-footer">
+            <p>© 2026 ClinTrack. All rights reserved.</p>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeForgotPassword()">&times;</span>
+            <h2>Reset Password</h2>
+            <form id="forgotPasswordForm" onsubmit="handlePasswordReset(event)">
+                <div class="form-group">
+                    <label>Enter your email address</label>
+                    <input type="email" id="resetEmail" placeholder="Email address" required>
+                </div>
+                <button type="submit" class="btn btn-login" id="resetSendButton">Send Reset Link</button>
+                <button type="button" class="btn btn-secondary" onclick="closeForgotPassword()">Cancel</button>
+                <p class="modal-link">Remembered your password? <a href="#" onclick="closeForgotPassword()">Back to login</a></p>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="login-script.js"></script>
+
+</body>
+</html>

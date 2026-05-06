@@ -1,0 +1,360 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClinTrack - Instructor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="instructor.css">
+<link rel="stylesheet" href="portal-menu.css">
+<script type="module" src="firebase.js" defer></script>
+<script type="module" src="instructor-script.js" defer></script>
+</head>
+<body>
+<script>
+// Initialize placeholder functions before module loads
+window.pendingCalls = [];
+
+window.showSection = function(sectionId, event) {
+  window.pendingCalls.push({ fn: 'showSection', args: [sectionId, event] });
+  if (event && event.preventDefault) event.preventDefault();
+};
+
+window.logout = function() {
+  window.pendingCalls.push({ fn: 'logout', args: [] });
+};
+
+window.addForumPost = function() {
+  window.pendingCalls.push({ fn: 'addForumPost', args: [] });
+};
+
+window.openInstructorSectionModal = function(sectionId) {
+  window.pendingCalls.push({ fn: 'openInstructorSectionModal', args: [sectionId] });
+};
+
+window.closeInstructorSectionModal = function() {
+  window.pendingCalls.push({ fn: 'closeInstructorSectionModal', args: [] });
+};
+
+window.renderInstructorSectionModalById = function(sectionId, tab) {
+  window.pendingCalls.push({ fn: 'renderInstructorSectionModalById', args: [sectionId, tab] });
+};
+
+window.openInstructorSectionModalStudents = function(sectionId) {
+  window.pendingCalls.push({ fn: 'openInstructorSectionModalStudents', args: [sectionId] });
+};
+
+window.deleteSchedule = function(id) {
+  window.pendingCalls.push({ fn: 'deleteSchedule', args: [id] });
+};
+
+window.openLabNotesModal = function(id) {
+  window.pendingCalls.push({ fn: 'openLabNotesModal', args: [id] });
+};
+
+window.toggleLabReview = function(id) {
+  window.pendingCalls.push({ fn: 'toggleLabReview', args: [id] });
+};
+
+window.deleteLab = function(id) {
+  window.pendingCalls.push({ fn: 'deleteLab', args: [id] });
+};
+
+window.downloadDutyFile = function(fileId) {
+  window.pendingCalls.push({ fn: 'downloadDutyFile', args: [fileId] });
+};
+
+window.openDutyLink = function(fileId) {
+  window.pendingCalls.push({ fn: 'openDutyLink', args: [fileId] });
+};
+
+// Authentication check
+(function() {
+  const currentUser = localStorage.getItem('currentUser');
+  if (!currentUser) {
+    window.location.href = 'login.html';
+    return;
+  }
+  const user = JSON.parse(currentUser);
+  if (user.role !== 'instructor') {
+    localStorage.removeItem('currentUser');
+    window.location.href = 'login.html';
+  }
+})();
+</script>
+<header class="admin-header portal-header">
+    <div class="header-left portal-header-left">
+        <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Open navigation menu">
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+        </button>
+        <img src="clintrack_logo.png" alt="ClinTrack Logo" class="portal-logo">
+        <div class="portal-title-group">
+            <h1 class="portal-title">ClinTrack Portal</h1>
+            <span class="admin-badge portal-badge">Instructor</span>
+        </div>
+    </div>
+    <div class="header-right portal-header-right">
+      <nav class="header-nav">
+        <a href="AboutUs.html" target="_blank" rel="noopener noreferrer" class="about-link">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>About Us</span>
+        </a>
+        </nav>
+        <div class="profile-menu">
+            <button class="profile-trigger" type="button" aria-haspopup="true" aria-expanded="false" onclick="toggleProfileMenu(event)" aria-label="Open profile menu">
+                <i class="fa-solid fa-user"></i>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="profile-name" id="profileName">Loading...</div>
+                <button class="logout-btn portal-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="admin-container portal-layout">
+    <nav class="admin-sidebar portal-nav" id="sidebar" aria-label="Primary navigation">
+        <div class="sidebar-header portal-nav-header">
+            <h2 class="sidebar-title">MENU</h2>
+        </div>
+        <ul class="nav-menu portal-nav-menu">
+            <li><a href="#dashboard" data-section="dashboard" onclick="showSection('dashboard', event)" class="nav-link active"><i class="fa-solid fa-chart-bar"></i> Dashboard</a></li>
+            <li><a href="#forum" data-section="forum" onclick="showSection('forum', event)" class="nav-link"><i class="fa-solid fa-comments"></i> Forum / Announcement</a></li>
+            <li><a href="#classrooms" data-section="classrooms" onclick="showSection('classrooms', event)" class="nav-link"><i class="fa-solid fa-building"></i> Classrooms</a></li>
+            <li><a href="#manageSchedule" data-section="manageSchedule" onclick="showSection('manageSchedule', event)" class="nav-link"><i class="fa-solid fa-calendar-days"></i> Manage Schedules</a></li>
+            <li><a href="#receivedLab" data-section="receivedLab" onclick="showSection('receivedLab', event)" class="nav-link"><i class="fa-solid fa-flask"></i> Lab Tests</a></li>
+        </ul>   
+    </nav>
+<div class="admin-main">
+<div id="dashboard" class="section">
+<div class="card">
+<h3>👋 Welcome Clinical Instructor</h3>
+<p>This portal allows you to manage clinical duty schedules, receive return demos from students, and track lab tests.</p>
+</div>
+<div class="card">
+<h3>Dashboard Metrics</h3>
+<div class="cards-grid">
+  <div class="metric-card">
+    <div class="metric-label">Students (Schedules)</div>
+    <div id="scheduleStudentCount" class="metric-value green">0</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Classrooms</div>
+    <div id="sectionCount" class="metric-value blue">0</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Pending Lab Tests</div>
+    <div id="pendingLabCount" class="metric-value orange">0</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Reviewed Lab Tests</div>
+    <div id="reviewedLabCount" class="metric-value green">0</div>
+  </div>
+  
+</div>
+</div>
+</div>
+<div id="manageSchedule" class="section hidden">
+<div class="card">
+<h3>Manage Clinical Duty Schedules</h3>
+<p>Assign students to clinical shifts and keep their schedule records up to date.</p>
+<div class="task-panel">
+  <strong>Add Schedule</strong>
+  <div class="cards-grid compact">
+    <input id="scheduleStudentId" placeholder="Student ID" />
+    <input id="scheduleDate" placeholder="Date" />
+    <input id="scheduleHospital" placeholder="Hospital / Unit" />
+    <input id="scheduleWard" placeholder="Ward/Department" />
+    <input id="scheduleShift" placeholder="Shift (7:30 AM - 5:00 PM)" />
+    <button class="primary" id="addScheduleBtn">Save Schedule</button>
+  </div>
+  
+</div>
+<div class="section-margin-top">
+  <h4 class="section-heading"><i class="fa-solid fa-folder-closed"></i> Current Schedules</h4>
+  <div class="responsive-table"><table><thead><tr><th style="width:12%;">Date</th><th style="width:20%;">Student</th><th style="width:20%;">Hospital</th><th style="width:20%;">Ward</th><th style="width:13%;">Shift</th><th style="width:10%;">Action</th></tr></thead><tbody id="scheduleTableBody"></tbody></table></div>
+</div>
+</div>
+</div>
+<div id="receivedLab" class="section hidden">
+<div class="card">
+<h3>Received Lab Tests</h3>
+<p class="section-notice">Review student-submitted lab results and mark their status. Use the table actions to update or remove entries.</p>
+<div class="responsive-table">
+  <table class="instructor-table">
+    <thead>
+      <tr>
+        <th class="col-student">Student</th>
+        <th class="col-lab">Lab Test</th>
+        <th class="col-date">Date</th>
+        <th class="col-result">Result</th>
+        <th class="col-notes">Notes</th>
+        <th class="col-action">Action</th>
+      </tr>
+    </thead>
+    <tbody id="labTableBody"></tbody>
+  </table>
+</div>
+</div>
+</div>
+<div id="classrooms" class="section hidden">
+<div class="card">
+<h3>Classroom Management</h3>
+<p class="section-notice">Create sections, manage enrolled students, and review duty requirement submissions inside each classroom.</p>
+
+<!-- Create Section Panel -->
+<div style="margin-bottom: 20px; padding: 16px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+  <h4 style="margin-bottom: 12px; color: #333;">Create New Clinical Section</h4>
+  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
+    <div style="flex: 1; min-width: 250px;">
+      <input id="sectionName" placeholder="Classroom Name" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; width: 100%; font-family: inherit;" />
+    </div>
+    <button class="primary" id="generateSectionBtn" style="padding: 10px 20px;">Generate Code</button>
+  </div>
+  <p id="sectionCodeOutput" style="margin-top:12px; padding: 12px 16px; background: #eff6ff; border: 2px solid #0066cc; border-radius: 8px; font-weight:600; color: #0066cc; font-family: 'Courier New', monospace; font-size: 16px; letter-spacing: 2px; text-align: center; cursor: pointer;"></p>
+</div>
+
+<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #f2f2f2;">
+  <h4 style="margin-bottom: 12px; color: #333;">My Classrooms</h4>
+  <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Open a classroom to view enrolled students and submitted duty requirements.</p>
+  <div id="instructorSectionsContainer" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+    <p style="color:#999; padding:12px; border:1px dashed #cbd5e1; border-radius:8px; grid-column: 1 / -1;">No classrooms created yet.</p>
+  </div>
+</div>
+
+<div id="instructorSectionDetail" style="margin-top: 20px; padding: 24px; background: linear-gradient(135deg, #f0f7ff 0%, #f8fafc 100%); border-radius: 12px; border: 1px solid #bcd6ff; text-align: center;">
+  <div style="font-size: 28px; margin-bottom: 12px;"><i class="fa-solid fa-folder-closed"></i></div>
+  <p style="font-size: 14px; color: #740000; margin: 0; font-weight: 600;">Select a Classroom</p>
+  <p style="font-size: 13px; color: #667085; margin: 8px 0 0 0;">Click on a classroom card above to view students and duty requirement submissions.</p>
+</div>
+
+<div id="sectionModal" class="dialog-modal hidden"></div>
+</div>
+</div>
+
+<!-- Section Detail Page (Full Page View) -->
+<div id="sectionDetailPage" class="section hidden" style="padding: 0;">
+  <!-- Header Section -->
+  <div class="section-detail-header">
+    <div class="section-detail-header-container">
+      <button id="backToClassroomsBtn" class="back-button" onclick="goBackToClassrooms()" aria-label="Go back to classrooms">
+        <span class="back-icon">←</span>
+        <span class="back-text">Back</span>
+      </button>
+      <div class="section-detail-header-info">
+        <h1 id="sectionDetailTitle" class="section-detail-title">Section Name</h1>
+        <p id="sectionDetailInfo" class="section-detail-meta">Code: XXX • X students</p>
+      </div>
+      <div class="section-actions">
+        <button id="copySectionCodeBtn" class="action-btn" onclick="copySectionCode()" title="Copy section code to clipboard">
+          <i class="fa-solid fa-copy"></i> Copy
+        </button>
+        <button id="colorPickerBtn" class="action-btn" onclick="openColorPicker()" title="Change section color">
+          <i class="fa-solid fa-palette"></i> Color
+        </button>
+        <button id="deleteSectionBtn" class="action-btn" onclick="deleteCurrentSection()" title="Delete this section">
+          <i class="fa-solid fa-trash"></i> Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="section-detail-content">
+    <!-- Tabs -->
+    <div class="section-detail-tabs" id="sectionDetailTabs">
+      <button id="detailOverviewTab" class="detail-tab active" onclick="switchSectionDetailTab('overview')">Overview</button>
+      <button id="detailStudentsTab" class="detail-tab" onclick="switchSectionDetailTab('students')">Students</button>
+    </div>
+
+    <!-- Overview Tab Content -->
+    <div id="detailOverviewContent" class="tab-content">
+      <!-- Category Filters -->
+      <div class="categories-section">
+        <h3 class="section-label"><i class="fa-solid fa-folder-closed"></i> Duty Requirement Categories</h3>
+        <div id="sectionDetailCategoryFilters" class="category-tabs">
+          <!-- Categories will be inserted here -->
+        </div>
+      </div>
+
+      <!-- Submissions -->
+      <div class="submissions-section">
+        <h3 id="sectionDetailCategoryTitle" class="section-label">Category Name</h3>
+        <div id="sectionDetailSubmissions" class="submissions-list">
+          <!-- Submissions will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Students Tab Content -->
+    <div id="detailStudentsContent" class="tab-content" style="display: none;">
+      <div class="students-section">
+        <h3 class="section-label"><i class="fa-solid fa-users"></i> Enrolled Students</h3>
+        <div id="sectionDetailStudentsList" class="students-list">
+          <!-- Students list will be inserted here -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="forum" class="section hidden">
+  <div class="card">
+    <h3>Forum and Announcements</h3>
+   <h4 class="section-heading"><i class="fa-solid fa-bullhorn"></i> Announcements</h4>
+<button class="primary" onclick="openInstructorAnnouncementModal()" style="margin-bottom: 16px; padding: 10px 20px; border-radius: 8px;">
+      📢 Post Announcement
+    </button>
+
+<!-- Instructor Announcement Modal -->
+
+    <div id="announcementsContainer">
+      <p class="no-announcements">Loading announcements...</p>
+    </div>
+
+    <h4 class="section-heading"><i class="fa-solid fa-comments"></i> Freedom Wall</h4>
+    <div class="wall-composer" style="margin-bottom: 16px; background:#fff; padding:16px; border-radius:14px; border:1px solid #e5e7eb; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);">
+      <textarea id="forumInput" placeholder="Share a thought, ask a question, or post an update..." style="width:100%; min-height:100px; padding: 14px; border:1px solid #d1d5db; border-radius:12px; resize:vertical; font-size:14px;"></textarea>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        <span id="forumCharCount" class="character-count">0 / 500</span>
+        <button class="primary" onclick="addForumPost()" style="padding: 10px 18px; border-radius: 999px;">Post</button>
+      </div>
+    </div>
+    <div id="forumPosts"></div>
+  </div>  <!-- .card -->
+</div>    <!-- #forum -->
+
+</div>    <!-- .admin-main -->
+</div>    <!-- .admin-container -->
+<div id="instructorAnnouncementModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeInstructorAnnouncementModal()">&times;</span>
+        <h2>Post Announcement</h2>
+        <form onsubmit="addInstructorAnnouncement(event)">
+            <div class="form-group">
+                <label>Title:</label>
+                <input type="text" id="instructorAnnouncementTitle" required>
+            </div>
+            <div class="form-group">
+                <label>Message:</label>
+                <textarea id="instructorAnnouncementMessage" rows="6" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Priority:</label>
+                <select id="instructorAnnouncementPriority" required>
+                    <option value="Normal">Normal</option>
+                    <option value="Important">Important</option>
+                    <option value="Urgent">Urgent</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Post Announcement</button>
+                <button type="button" class="btn btn-secondary" onclick="closeInstructorAnnouncementModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

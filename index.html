@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClinTrack</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="portal-menu.css">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<script type="module" src="firebase.js" defer></script>
+<script type="module" src="script.js" defer></script>
+</head>
+<body>
+
+<script>
+// Initialize placeholder functions before module loads to prevent ReferenceError
+window.pendingCalls = [];
+
+window.showSection = function(sectionId, event) {
+  window.pendingCalls.push({ fn: 'showSection', args: [sectionId, event] });
+  if (event && event.preventDefault) event.preventDefault();
+};
+
+window.logout = function() {
+  window.pendingCalls.push({ fn: 'logout', args: [] });
+};
+
+window.addForumPost = function() {
+  window.pendingCalls.push({ fn: 'addForumPost', args: [] });
+};
+
+// Check authentication
+(function() {
+  const currentUser = localStorage.getItem('currentUser');  
+  if (!currentUser) {
+    window.location.href = 'login.html';
+    return;
+  }
+  const user = JSON.parse(currentUser);
+  if (user.role !== 'student') {
+    localStorage.removeItem('currentUser');
+    window.location.href = 'login.html';
+  }
+})();
+</script>
+
+<header class="admin-header portal-header">
+    <div class="header-left portal-header-left">
+        <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Open navigation menu">
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+            <span class="menu-toggle-bar"></span>
+        </button>
+        <img src="clintrack_logo.png" alt="ClinTrack Logo" class="portal-logo">
+        <div class="portal-title-group">
+            <h1 class="portal-title">ClinTrack Portal</h1>
+            <span class="admin-badge portal-badge">Student</span>
+        </div>
+    </div>
+    <div class="header-right portal-header-right">
+      <nav class="header-nav">
+        <a href="AboutUs.html" target="_blank" rel="noopener noreferrer" class="about-link">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>About Us</span>
+        </a>
+      </nav>
+        <div class="profile-menu">
+            <button class="profile-trigger" type="button" aria-haspopup="true" aria-expanded="false" onclick="toggleProfileMenu(event)" aria-label="Open profile menu">
+                <i class="fa-solid fa-user"></i>
+            </button>
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="profile-name" id="profileName">Loading...</div>
+                <button class="logout-btn portal-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="admin-container portal-layout">
+    <nav class="admin-sidebar portal-nav" id="sidebar" aria-label="Primary navigation">
+        <div class="sidebar-header portal-nav-header">
+            <h2 class="sidebar-title">MENU</h2>
+        </div>
+        <ul class="nav-menu portal-nav-menu">
+            <li><a href="#dashboard" data-section="dashboard" onclick="showSection('dashboard', event)" class="nav-link active"><i class="fa-solid fa-chart-bar"></i> Dashboard</a></li>
+            <li><a href="#forum" data-section="forum" onclick="showSection('forum', event)" class="nav-link"><i class="fa-solid fa-comments"></i> Forum / Announcement</a></li>
+            <li><a href="#classrooms" data-section="classrooms" onclick="showSection('classrooms', event)" class="nav-link"><i class="fa-solid fa-building"></i> Classrooms</a></li>
+            <li><a href="#schedule" data-section="schedule" onclick="showSection('schedule', event)" class="nav-link"><i class="fa-solid fa-calendar"></i> Clinical Duty Schedule</a></li>
+            <li><a href="#lab" data-section="lab" onclick="showSection('lab', event)" class="nav-link"><i class="fa-solid fa-vial"></i> Laboratory Test</a></li>
+        </ul>   
+    </nav>
+
+    <div class="admin-main">
+
+<div id="dashboard" class="section">
+<div class="card">
+<h3>👋 Welcome to ClinTrack</h3>
+<p>This portal is your comprehensive hub for managing your clinical training. Here you'll find your clinical duty schedule, submit your laboratory tests, upload duty requirements, and stay updated with important announcements from your Clinical Instructor.</p>
+</div>
+<div class="card">
+<h3>Quick Stats</h3>
+<p style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+  <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #e8f4f8, #c3cfe2); border-radius: 8px;">
+    <div style="font-size: 24px; font-weight: bold; color: #0066cc;" id="scheduleCount">0</div>
+    <div style="font-size: 12px; color: #2c3e50; margin-top: 5px;">Duty Schedules</div>
+  </div>
+  <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #fff7ed, #ffedd5); border-radius: 8px;">
+    <div style="font-size: 24px; font-weight: bold; color: #c05621;" id="joinedSectionCount">0</div>
+    <div style="font-size: 12px; color: #2c3e50; margin-top: 5px;">Joined Sections</div>
+  </div>
+  <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #d1fae5, #a7f3d0); border-radius: 8px;">
+    <div style="font-size: 24px; font-weight: bold; color: #059669;" id="labCount">0</div>
+    <div style="font-size: 12px; color: #2c3e50; margin-top: 5px;">Lab Tests</div>
+  </div>
+</p>
+</div>
+</div>
+
+<div id="classrooms" class="section hidden">
+<div class="card">
+  <h3>My Classroom & Clinical Sections</h3>
+  <p>Manage your enrolled classes and clinical sections all in one place.</p>
+
+  <div style="margin: 14px 0 8px; padding-top: 0; border-top: none;">
+    <h4 style="margin-bottom: 8px; color: #333;">Join a Clinical Section</h4>
+    <p style="font-size: 13px; color: #666; margin-bottom: 6px;">Enter your instructor's section code to join:</p>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+      <input id="sectionCodeInput" placeholder="Enter instructor section code" style="flex:1; min-width: 200px; padding: 12px 14px; border:1px solid #d1d5db; border-radius:8px;" />
+      <button class="primary" id="joinSectionBtn" style="padding: 12px 20px;">Join</button>
+    </div>
+    <p id="joinSectionMessage" style="margin-top:6px; font-size:13px;"></p>
+  </div>
+
+  <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #f2f2f2;">
+    <h4 style="margin-bottom: 12px; color: #333;">My Classrooms</h4>
+    <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Your enrolled classes:</p>
+    <div id="studentClassroomsContainer" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-top: 12px;"></div>
+    <div id="studentClassroomDetail" style="margin-top: 16px;"></div>
+  </div>
+</div>
+</div>
+
+<div id="schedule" class="section hidden">
+<div class="card">
+<h3>My Clinical Duty Schedule</h3>
+<table>
+<tr>
+<th>Date</th>
+<th>Hospital</th>
+<th>Ward</th>
+<th>Shift</th>
+<th>Clinical Instructor</th>  
+</tr>
+<tbody id="scheduleBody">
+<tr><td colspan="5" style="text-align: center; color: #999; padding: 20px;">No scheduled duties yet. Check back later!</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+<div id="lab" class="section hidden">
+<div class="card">
+<h3>My Laboratory Requirements</h3>
+<div class="student-lab-form">
+  <strong>Submit a Lab Test</strong>
+  <div class="student-lab-grid">
+    <div class="field">
+      <label for="studentLabTestName">Test</label>
+      <input id="studentLabTestName" placeholder="..." />
+    </div>
+    <div class="field">
+      <label for="studentLabResult">Result</label>
+      <input id="studentLabResult" placeholder="..." />
+    </div>
+    <div class="field">
+      <label for="studentLabDate">Date</label>
+      <input id="studentLabDate" type="date" class="input-date" />
+    </div>
+    <div class="field select-wrapper">
+      <label for="studentLabInstructor"></label>
+      <select id="studentLabInstructor" class="input-select" ><option value="">Select Instructor</option></select>
+    </div>
+    <div class="field field-wide">
+      <label for="studentLabNotes"></label>
+      <textarea id="studentLabNotes" placeholder="Notes for instructor"></textarea>
+    </div>
+  </div>
+  <button class="primary" id="submitLabBtn" style="margin-top: 12px;">Submit Lab Result</button>
+</div>
+<table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+<tr>
+<th>Test/Requirement</th>
+<th>Date Completed</th>
+<th>Result</th>
+<th>Instructor</th>
+<th>Notes</th>
+</tr>
+<tbody id="labBody">
+<tr><td colspan="5" style="text-align: center; color: #999; padding: 20px;">No lab tests recorded yet.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="dutyRequirement" class="section hidden">
+<div class="card">
+<h3>📁 Duty Requirement Management</h3>
+
+<!-- STUDENT VIEW -->
+<div id="studentDutyView" class="duty-view">
+<div style="background: #f0f7ff; padding: 12px; border-radius: 8px; border-left: 4px solid #0066cc; margin-bottom: 16px;">
+  <p style="font-size: 13px; color: #0066cc; margin: 0;">📤 Submit link for: Learning Feedback Diary, Drug Study, or Nursing Care Plan</p>
+</div>
+
+<div style="margin-bottom: 20px;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+    <select id="dutySectionSelect" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; width: 100%;">
+      <option value="">Select Joined Section</option>
+    </select>
+    <select id="dutyLinkType" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; width: 100%;">
+      <option value="">Select Requirement Type</option>
+      <option value="Learning Feedback Diary">Learning Feedback Diary</option>
+      <option value="Drug Study">Drug Study</option>
+      <option value="Nursing Care Plan">Nursing Care Plan</option>
+    </select>
+    <input id="dutyLinkUrl" placeholder="Paste document link here" style="padding: 10px; border:2px solid #e5e7eb; border-radius: 8px; width: 100%;" />
+    <select id="dutyLinkInstructor" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; width: 100%;">
+      <option value="">Select Instructor</option>
+    </select>
+    <button class="primary" id="submitDutyLinkBtn" style="padding: 10px; width: 160px;">Submit Link</button>
+  </div>
+</div>
+
+<div style="margin-bottom: 20px; padding: 16px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+  <h4 style="margin-bottom: 12px; color: #333;">📋 My Submissions</h4>
+  <div id="studentFilesList" style="max-height: 400px; overflow-y: auto;">
+    <p style="text-align: center; color: #999; padding: 20px;">No files uploaded yet.</p>
+  </div>
+</div>
+</div>
+
+<!-- INSTRUCTOR VIEW -->
+<div id="instructorDutyView" class="duty-view" style="display: none;">
+<div style="background: #fef3c7; padding: 12px; border-radius: 8px; border-left: 4px solid #d97706; margin-bottom: 16px;">
+  <p style="font-size: 13px; color: #d97706; margin: 0;">👥 View all student submissions and download files</p>
+</div>
+
+<div style="margin-bottom: 16px; display: flex; gap: 8px;">
+  <input type="text" id="dutySearchStudent" placeholder="🔍 Search student by name..." style="flex: 1;" />
+  <select id="dutyFilterType" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer;">
+    <option value="">All File Types</option>
+    <option value="Learning Feedback Diary">Learning Feedback Diary</option>
+    <option value="Drug Study">Drug Study</option>
+    <option value="Nursing Care Plan">Nursing Care Plan</option>
+  </select>
+</div>
+
+<div id="instructorStudentFolders" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+  <p style="text-align: center; color: #999; padding: 20px; grid-column: 1/-1;">Loading student submissions...</p>
+</div>
+</div>
+
+</div>
+</div>
+
+<div id="forum" class="section hidden">
+<div class="card">
+  <h3>Forum and Announcements</h3>
+  <h4 class="section-heading"><i class="fa-solid fa-bullhorn"></i> Announcements</h4>
+    <button class="primary" onclick="openStudentAnnouncementModal()" style="margin-bottom: 16px; padding: 10px 20px; border-radius: 8px;">
+      📢 Post Announcement
+    </button>
+
+    <div id="announcementsContainer">
+      <p class="no-announcements">Loading announcements...</p>
+    </div>
+
+    <h4 class="section-heading"><i class="fa-solid fa-comments"></i> Freedom Wall</h4>
+    <div class="wall-composer" style="margin-bottom: 16px; background:#fff; padding:16px; border-radius:14px; border:1px solid #e5e7eb; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);">
+      <textarea id="forumInput" placeholder="Share a thought, ask a question, or post an update..." style="width:100%; min-height:100px; padding: 14px; border:1px solid #d1d5db; border-radius:12px; resize:vertical; font-size:14px;"></textarea>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        <span id="forumCharCount" class="character-count">0 / 500</span>
+        <button class="primary" onclick="addForumPost()" style="padding: 10px 18px; border-radius: 999px;">Post</button>
+      </div>
+    </div>
+    <div id="forumPosts"></div>
+  </div>  <!-- .card -->
+</div>    <!-- #forum -->
+
+</div>
+</div>
+ <div id="studentAnnouncementModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close" onclick="closeStudentAnnouncementModal()">&times;</span>
+        <h2>Post Announcement</h2>
+        <form onsubmit="addStudentAnnouncement(event)">
+          <div class="form-group">
+            <label for="studentAnnouncementTitle">Title:</label>
+            <input type="text" id="studentAnnouncementTitle" required>
+          </div>
+          <div class="form-group">
+            <label for="studentAnnouncementMessage">Message:</label>
+            <textarea id="studentAnnouncementMessage" rows="6" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="studentAnnouncementPriority">Priority:</label>
+            <select id="studentAnnouncementPriority" required>
+              <option value="Normal">Normal</option>
+              <option value="Important">Important</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Post Announcement</button>
+            <button type="button" class="btn btn-secondary" onclick="closeStudentAnnouncementModal()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+</body>
+</html>
